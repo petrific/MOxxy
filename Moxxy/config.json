@@ -1,0 +1,37 @@
+{
+    "PassthroughOnFail": true,
+    "PassthroughPath": "https://www.google.com",
+    "Path": "http://localhost:9090/",
+    "Routes": [
+        {
+            "Path": "http://localhost:9090/*/TEST",
+            "METHOD": "GET",
+            "Response": "HELLO WORLD",
+            "Code": 403
+        },
+        {
+            "Path": "http://localhost:9090/*",
+            "METHOD": "GET",
+            "Response": "HELLO WORLD GENERIC",
+            "Code": 401
+        },
+        {
+            "Path": "http://localhost:9090/ABC/TEST",
+            "METHOD": "GET",
+            "Response": "HELLO WORLD SPECIFIC",
+            "Code": 200
+        },
+        {
+            "Path": "http://localhost:9090/ABC/TEST",
+            "METHOD": "GET",
+            "Response": "HELLO WORLD SUPER SPECIFIC",
+            "Code": 200,
+            "Headers": [
+                {
+                    "Key": "Test_Header",
+                    "Value": "Test Value"
+                }
+            ]
+        }                        
+    ]
+}
