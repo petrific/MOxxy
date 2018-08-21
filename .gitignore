@@ -1,0 +1,8 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/Moxxy/bin/Debug
+/Moxxy/obj/Debug
+/.vs/Moxxy/v15
+/packages

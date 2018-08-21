@@ -29,7 +29,7 @@ namespace Moxxy
 		{
 			ThreadPool.QueueUserWorkItem(w =>
 			{
-				Console.WriteLine("Running...");
+				Console.WriteLine($"Listening to {this.server.Path}...");
 				try {
 					while(this.listener.IsListening){
 						ThreadPool.QueueUserWorkItem(c =>
@@ -37,25 +37,10 @@ namespace Moxxy
 							var context = c as HttpListenerContext;
 							try
 							{
-								Console.WriteLine("SERVING");
-								if(!this.ProcessRequest(context) && this.server.PassthroughOnFail){
-									var passthroughUri = new Uri(this.server.PassthroughPath, context.Request.Url.AbsolutePath);
-									var passthroughRequest = WebRequest.Create(passthroughUri);
-									foreach (string kvp in context.Request.Headers.Keys) {
-										HttpRequestHeader headerName;
-										bool isDefault = Enum.TryParse<HttpRequestHeader>(kvp, out headerName);
-										if (isDefault)
-										{
-											continue;
-										}
-										try
-										{
-											passthroughRequest.Headers.Add(kvp, context.Request.Headers[kvp]);
-										}
-										catch { }
-									}
-									var response = passthroughRequest.GetResponse().GetResponseStream();
-									response.CopyTo(context.Response.OutputStream);
+								Console.WriteLine($"Serving request {context.Request.RawUrl}...");
+								if(!this.ProcessRequest(context) && this.server.PassthroughOnFail)
+								{
+									this.Passthrough(context);
 								}
 							}
 							catch (Exception e) { }
@@ -67,6 +52,28 @@ namespace Moxxy
 					}
 				}catch{ }
 			});
+		}
+
+		private void Passthrough(HttpListenerContext context)
+		{
+			var passthroughUri = new Uri(this.server.PassthroughPath, context.Request.Url.AbsolutePath);
+			var passthroughRequest = WebRequest.Create(passthroughUri);
+			foreach (string kvp in context.Request.Headers.Keys)
+			{
+				HttpRequestHeader headerName;
+				bool isDefault = Enum.TryParse<HttpRequestHeader>(kvp, out headerName);
+				if (isDefault)
+				{
+					continue;
+				}
+				try
+				{
+					passthroughRequest.Headers.Add(kvp, context.Request.Headers[kvp]);
+				}
+				catch { }
+			}
+			var response = passthroughRequest.GetResponse().GetResponseStream();
+			response.CopyTo(context.Response.OutputStream);
 		}
 
 		public void Stop()
@@ -87,12 +94,10 @@ namespace Moxxy
 				}
 
 				bool allowedWildcards = false;
-				if(!MatchUri(route.Uri, uri, ref allowedWildcards))
+				if(!MatchUri(route.Uri, uri, ref allowedWildcards) ||
+				   !MatchValues(route.Headers, request.Headers, ref allowedWildcards) ||
+				   !MatchValues(route.Parameters, request.QueryString, ref allowedWildcards))
 				{
-					continue;
-				}
-
-				if(!MatchHeaders(route.Headers, request.Headers, ref allowedWildcards)){
 					continue;
 				}
 
@@ -113,30 +118,36 @@ namespace Moxxy
 			return true;
 		}
 
-		private bool MatchHeaders(HeaderData[] routeHeaders, NameValueCollection requestHeaders, ref bool allowedWildcards)
+		private bool MatchValues(NamedParameter[] targets, NameValueCollection values, ref bool allowedWildcards)
 		{
-			if(routeHeaders == null || routeHeaders.Length == 0){
-				bool matchesHeaderCount = requestHeaders.Count == 0;
+			if(targets == null || targets.Length == 0){
+				bool matchesHeaderCount = values.Count == targets.Length;
 				allowedWildcards |= !matchesHeaderCount;
 				return true;
 			}
 
-			bool allowedWildcardsInHeaders = false;
-			foreach (HeaderData header in routeHeaders) {
-				string value = requestHeaders[header.Key];
-				if (string.IsNullOrEmpty(value)) {
-					return false;
-				}
-
-				bool allowWildcard = header.Value.Contains("*");
-				if (!allowWildcard && header.Value != value) {
-					return false;
-				}
-
-				allowedWildcardsInHeaders |= allowWildcard;
+			if(values.Count < targets.Length){
+				return false;
 			}
 
-			allowedWildcards |= allowedWildcardsInHeaders;
+			bool allowedWildcardsInParameters = false;
+			foreach (NamedParameter parameter in targets)
+			{
+				string value = values[parameter.Key];
+				if (string.IsNullOrEmpty(value))
+				{
+					return false;
+				}
+
+				bool allowWildcard;
+				if (!this.Compare(parameter.Value, value, out allowWildcard))
+				{
+					return false;
+				}
+				allowedWildcardsInParameters |= allowWildcard;
+			}
+
+			allowedWildcards |= allowedWildcardsInParameters;
 			return true;
 		}
 
@@ -150,22 +161,21 @@ namespace Moxxy
 			{
 				string routeSegment = routeUri.Segments[i];
 				string uriSegment = requestUri.Segments[i];
-				var currentSegmentAllowsWildcards = routeSegment.StartsWith("*");
-				usedWildcard |= currentSegmentAllowsWildcards;
-
-				if (!this.Compare(routeSegment, uriSegment, ref usedWildcard))
+				bool currentSegmentAllowsWildcards;
+				if (!this.Compare(routeSegment.ToLowerInvariant(), uriSegment.ToLowerInvariant(), out currentSegmentAllowsWildcards))
 				{
 					return false;
 				}
+				usedWildcard |= currentSegmentAllowsWildcards;
 			}
 			return true;
 		}
 
-		private bool Compare(string target, string value, ref bool allowedWildcards)
+		private bool Compare(string target, string value, out bool allowedWildcards)
 		{
 			var allowWildcards = target.StartsWith("*");
-			allowedWildcards |= allowWildcards;
-			return allowWildcards || target.ToLowerInvariant() == value;
+			allowedWildcards = allowWildcards;
+			return allowWildcards || target == value;
 		}
 	}
 }

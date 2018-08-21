@@ -36,7 +36,7 @@ namespace Moxxy
 				jsonReader = new JsonTextReader(reader);
 				data = Newtonsoft.Json.JsonSerializer.Create().Deserialize<ServerData>(jsonReader);
 			}
-			catch (FileNotFoundException)
+			catch (FileNotFoundException e)
 			{
 				Console.WriteLine("Could not find config.json");
 			}
@@ -62,14 +62,15 @@ namespace Moxxy
 	public class RouteData
 	{
 		internal Uri Uri;
-		public HeaderData[] Headers;
+		public NamedParameter[] Headers;
+		public NamedParameter[] Parameters;
 		public string Path;
 		public string Method;
 		public HttpStatusCode Code;
 		public string Response;
 	}
 
-	public class HeaderData{
+	public class NamedParameter{
 		public string Key;
 		public string Value;
 	}
