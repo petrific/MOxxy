@@ -1,0 +1,16 @@
+<h1>
+  Active Servers
+  <ul>
+    <li *ngFor="let item of Servers; let itemIndex = index">
+      <div>
+        {{item.path}}      <a (click)="toggleServer(item, itemIndex)" *ngIf="item.active">(Disable)</a>
+        <a (click)="toggleServer(item, itemIndex)" *ngIf="!item.active">(Enable)</a>
+      </div>
+      <div>
+        <div>
+          Passthrough on fail: {{item.passthroughOnFail}}
+        </div>
+      </div>
+    </li>
+  </ul>
+</h1>

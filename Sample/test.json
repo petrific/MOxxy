@@ -1,0 +1,55 @@
+{
+	"Name": "Server1",
+	"PassthroughOnFail": true,
+	"PassthroughPath": {
+		"Scheme": "http",
+		"Host": "localhost",
+		"Port": "53348"
+	},
+	"Path": "http://localhost:9090/",
+	"Routes": [
+		{
+			"Path": "/*/TEST",
+			"METHOD": "GET",
+			"Response": "HELLO WORLD",
+			"Code": 403
+		},
+		{
+			"Path": "/*",
+			"METHOD": "GET",
+			"Response": "HELLO WORLD GENERIC",
+			"Code": 401
+		},
+		{
+			"Path": "/ABC/TEST",
+			"METHOD": "GET",
+			"Response": "HELLO WORLD SPECIFIC",
+			"Code": 200
+		},
+		{
+			"Path": "/ABC/TEST",
+			"METHOD": "GET",
+			"Response": "HELLO WORLD SUPER SPECIFIC",
+			"Code": 200,
+			"Headers": [
+				{
+					"Key": "Test_Header",
+					"Value": "Test Value"
+				}
+			]
+		},
+		{
+			"Path": "/ABC/TESTWITHPARAMS",
+			"METHOD": "GET",
+			"Response": "HELLO WORLD SUPER SPECIFIC WITH PARAMETERS",
+			"Code": 200,
+			"Parameters": [
+				{
+					"Key": "Parameter",
+					"Value": "Guanabana"
+				}
+			]
+		}
+
+	]
+}
