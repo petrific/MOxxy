@@ -1,0 +1,1 @@
+dotnet run ./Samples/Test.json

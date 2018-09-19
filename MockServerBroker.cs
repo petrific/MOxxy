@@ -111,6 +111,20 @@ namespace Moxxy
 			server.Routes = server.Routes.Append(route).ToArray();
 			Console.WriteLine($"Promoted route \"{route.Path}\" to permanent in server \"{server.Name}\"");
 		}
+
+		public void PromotePassthroughRoutesToPermanent(ServerData server)
+		{
+			if (server == null || !server.PassthroughRecords.Any())
+			{
+				Console.WriteLine($"Cannot promote routes to permanent in server \"{server.Name}\". there are no routes");
+				return;
+			}
+
+			foreach(var route in server.PassthroughRecords){
+				this.PromotePassthroughRouteToPermanent(server, route);
+			}
+			Console.WriteLine($"Promoted routes to permanent in server \"{server.Name}\"");
+		}
 	}
 }
 

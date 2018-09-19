@@ -18,6 +18,12 @@ export class ServerOverviewComponent implements OnInit {
     });
   }
 
+  promotePassthroughRoutes(server: MockServerData, index: number) {
+    this.mockServerService.promotePassthroughRoutes(server).subscribe((newServer: MockServerData) => {
+      this.Servers[index] = newServer;
+    });
+  }
+
   ngOnInit()
   {
     this.mockServerService.getMockServers().subscribe((servers: MockServerData[]) => {
