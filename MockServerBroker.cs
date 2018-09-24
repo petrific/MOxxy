@@ -1,7 +1,9 @@
 ﻿using Moxxy.Mock;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -16,7 +18,8 @@ namespace Moxxy
 
 		private ConcurrentDictionary<string, ServerData> activeServers;
 		public bool ShutdownRequired = false;
-		
+		private StartupParameters startupParams;
+
 		public static MockServerBroker Instance {
 			get {
 				
@@ -30,6 +33,38 @@ namespace Moxxy
 		private MockServerBroker()
 		{
 			this.activeServers = new ConcurrentDictionary<string, ServerData>();
+		}
+
+		public async Task InitFromParameters(StartupParameters parameters)
+		{
+			this.startupParams = parameters;
+			if(parameters.BuildMode){
+				Uri passthroughUri = new Uri(parameters.PassthroughRoute);
+				ServerData newServer = new ServerData
+				{
+					Name = parameters.ServerName,
+					Path = parameters.ServerRoute,
+					PassthroughOnFail = true,
+					PassthroughPath = new Microsoft.AspNetCore.Builder.ProxyOptions {
+						Host = passthroughUri.Host,
+						Port = passthroughUri.IsDefaultPort ? "80" : passthroughUri.Port.ToString()
+					},
+					BuildMode = true
+				};
+				TryAddServer(newServer);
+				await ActivateServer(newServer.Name, newServer);
+				return;
+			}
+
+			if(parameters.ServerFiles.Any()){
+				foreach(string serverFile in parameters.ServerFiles){
+					var server = ServerData.LoadFrom(serverFile);
+					if(TryAddServer(server))
+					{
+						await ActivateServer(server.Name, server);
+					}
+				}
+			}
 		}
 
 		public bool TryAddServer(ServerData server)
@@ -107,14 +142,14 @@ namespace Moxxy
 				Console.WriteLine($"Cannot promote route \"{route.Path}\" to permanent in server \"{server.Name}\" because the server does not contain that route.");
 				return;
 			}
-
+			server.Routes = server.Routes ?? new MockRouteData[0];
 			server.Routes = server.Routes.Append(route).ToArray();
 			Console.WriteLine($"Promoted route \"{route.Path}\" to permanent in server \"{server.Name}\"");
 		}
 
-		public void PromotePassthroughRoutesToPermanent(ServerData server)
+		public void PromotePassthroughRoutesToPermanent(string serverName)
 		{
-			if (server == null || !server.PassthroughRecords.Any())
+			if (!this.activeServers.TryGetValue(serverName, out ServerData server) || !server.PassthroughRecords.Any())
 			{
 				Console.WriteLine($"Cannot promote routes to permanent in server \"{server.Name}\". there are no routes");
 				return;
@@ -124,6 +159,18 @@ namespace Moxxy
 				this.PromotePassthroughRouteToPermanent(server, route);
 			}
 			Console.WriteLine($"Promoted routes to permanent in server \"{server.Name}\"");
+		}
+
+		public void SaveBuildServer()
+		{
+			if(File.Exists(this.startupParams.ServerPath)){
+				File.Delete(this.startupParams.ServerPath);
+			}
+
+			var writer = new StreamWriter(this.startupParams.ServerPath);
+			string jsonFile = JsonConvert.SerializeObject(this.activeServers[startupParams.ServerName]);
+			writer.Write(jsonFile);
+			writer.Close();
 		}
 	}
 }

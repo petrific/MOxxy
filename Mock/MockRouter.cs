@@ -41,6 +41,11 @@ namespace Moxxy.Mock
 
 		public async Task<bool> ProcessRequest(HttpContext context, bool generateResponse = true)
 		{
+			if(this.serverData.Routes == null || !this.serverData.Routes.Any())
+			{
+				return false;
+			}
+
 			var request = context.Request;
 			var uri = request.Path;
 			MockRouteData? selectedRoute = null;

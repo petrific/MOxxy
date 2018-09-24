@@ -8,16 +8,9 @@
     }
   },
   "profiles": {
-    "IIS Express": {
-      "commandName": "IISExpress",
-      "launchBrowser": true,
-      "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
-      }
-    },
-    "Moxxy": {
+    "Development": {
       "commandName": "Project",
-      "commandLineArgs": "test.json",
+      "commandLineArgs": "-sf .\\Sample\\test.json",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"

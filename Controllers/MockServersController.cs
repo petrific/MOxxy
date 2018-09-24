@@ -64,15 +64,14 @@ namespace Moxxy.Controllers
 			return BadRequest();
 		}
 
-		[HttpPut("{serverName}/PromoteRoutes")]
-		public ServerData PromotePassthroughRoutes([FromBody] ServerData server){
-			if (server == null || !server.IsValid())
-			{
-				return server;
+		[HttpGet("{serverName}/PromoteRoutes")]
+		public ActionResult PromotePassthroughRoutes(string serverName){
+			if(string.IsNullOrEmpty(serverName)){
+				return BadRequest();
 			}
 
-			MockServerBroker.Instance.PromotePassthroughRoutesToPermanent(server);
-			return server;
+			MockServerBroker.Instance.PromotePassthroughRoutesToPermanent(serverName);
+			return Ok();
 		}
 	}
 }

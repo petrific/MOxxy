@@ -1,6 +1,6 @@
 {
 	"Name": "Server1",
-	"PassthroughOnFail": true,
+	"PassthroughOnFail": true, 
 	"PassthroughPath": {
 		"Scheme": "http",
 		"Host": "localhost",

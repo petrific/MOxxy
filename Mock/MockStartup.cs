@@ -53,7 +53,7 @@ namespace Moxxy.Mock
 			app.UseRouter(this.router);
 			app.UseMiddleware(typeof(ResponseRewindMiddleware), serverData).MapWhen((context) =>
 			{
-				return this.router.ProcessRequest(context, false).Result;
+				return !this.router.ProcessRequest(context, false).Result;
 			}, builder => builder.RunProxy(serverData.PassthroughPath))
 			.UseMvc();
 		}
@@ -91,7 +91,12 @@ namespace Moxxy.Mock
 					routeData.Code = (HttpStatusCode) context.Response.StatusCode;
 					routeData.Response = responseBody;
 					if(!server.PassthroughRecords.Add(routeData)){
-						//TODO: Do something here, maybe.
+						// Do something here
+					}
+					if (server.BuildMode)
+					{
+						MockServerBroker.Instance.PromotePassthroughRouteToPermanent(server, routeData);
+						MockServerBroker.Instance.SaveBuildServer();
 					}
 					memStream.Position = 0;
 					await memStream.CopyToAsync(originalBody);

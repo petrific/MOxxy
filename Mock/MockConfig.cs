@@ -21,6 +21,7 @@ namespace Moxxy.Mock
 
 		public bool Active;
 		internal HashSet<MockRouteData> PassthroughRecords;
+		internal bool BuildMode;
 
 		internal IWebHost ServerInstance;
 

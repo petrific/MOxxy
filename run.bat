@@ -1,1 +1,1 @@
-dotnet run ./Samples/Test.json
+dotnet run -sf ./Sample/Test.json
