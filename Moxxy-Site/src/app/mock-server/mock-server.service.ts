@@ -28,14 +28,7 @@ export class MockServerService
   }
 
   promotePassthroughRoutes(server: MockServerData) {
-    let headers = new HttpHeaders();
-    headers = headers.append('Content-Type', 'application/json');
-    return this.http.put(
-      this.url + this.controller + '/' + encodeURI(server.name) + '/PromoteRoutes',
-      JSON.stringify(server), {
-        headers: headers
-      }
-    );
+    return this.http.get(this.url + this.controller + '/' + encodeURI(server.name) + '/PromoteRoutes');
   }
 
 }
